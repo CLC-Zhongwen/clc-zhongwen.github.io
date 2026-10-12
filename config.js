@@ -2,5 +2,5 @@
 // 예) "https://cwn-coach-api.seunggi.workers.dev"
 // 비워 두면 같은 주소의 /api/coach 를 부른다 (로컬 테스트 서버용).
 window.CWN_CONFIG = {
-  apiUrl: "",
+  apiUrl: "https://cwn-coach-api.cwn-coach-api.workers.dev",
 };
