@@ -3,7 +3,7 @@
 한국어나 서툰 중국어 문장을 넣으면 회화체(口语)나 서면어(书面语)로 다듬어 주는 중국어 작문 코치예요.
 교정 이유, 병음, 핵심 어휘와 HSK 급수, 문법 설명, 다른 문체로 쓴 문장도 함께 보여 줍니다.
 
-**공개 주소**: https://seunggih633-netizen.github.io/chinese-writing-note/
+**공개 주소**: https://clc-zhongwen.github.io/
 **AI 서버**: https://cwn-coach-api.cwn-coach-api.workers.dev (상태 확인: `/api/health`)
 
 ```
@@ -44,7 +44,7 @@ npx wrangler login
 
 브라우저가 열리면 Cloudflare 계정으로 로그인하고 허용을 눌러요. 계정이 없으면 무료로 가입해요.
 
-`worker/wrangler.toml`의 `ALLOWED_ORIGINS`에서 `YOUR-GITHUB-ID`를 본인 GitHub 아이디로 바꿔요. 그다음 아래 명령을 차례로 실행해요.
+`worker/wrangler.toml`의 `ALLOWED_ORIGINS`에 웹앱 주소(현재 `https://clc-zhongwen.github.io`)가 들어 있는지 확인해요. 그다음 아래 명령을 차례로 실행해요.
 
 ```bash
 npx wrangler deploy

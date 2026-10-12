@@ -14,7 +14,7 @@ import urllib.error
 import urllib.request
 
 API = os.environ.get("CWN_API", "https://cwn-coach-api.cwn-coach-api.workers.dev/api/coach")
-ORIGIN = os.environ.get("CWN_ORIGIN", "https://seunggih633-netizen.github.io")
+ORIGIN = os.environ.get("CWN_ORIGIN", "https://clc-zhongwen.github.io")
 TEXT = "这个周末我想跟朋友去爬山，但是天气预报说下雨了会，所以我们还没有决定了要不要去。"
 PROFILES = {
     "HSK4": {"role": "학생", "grade": "2학년", "level": "중급 (HSK 4)"},

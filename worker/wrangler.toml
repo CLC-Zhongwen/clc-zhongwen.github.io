@@ -10,8 +10,8 @@ region = "gcp:asia-northeast3"
 
 [vars]
 # 이 웹앱을 올린 주소만 AI 서버를 부를 수 있다. 쉼표로 여러 개. 끝에 / 없이, 경로 없이 도메인까지만.
-# 예) GitHub 아이디가 seunggi 이면 "https://seunggi.github.io"
-ALLOWED_ORIGINS = "https://zhongwen-note.github.io,https://seunggih633-netizen.github.io"
+# 예) "https://clc-zhongwen.github.io"
+ALLOWED_ORIGINS = "https://clc-zhongwen.github.io"
 # 기본 모델과, 바쁘거나 무료 한도를 다 썼을 때 대신 쓸 모델 (둘 다 Gemini API 가격표에서 무료 등급 제공 모델)
 # 2026-10-12 측정: gemini-3.8-flash 는 무료 등급 하루 20회 한도라 학과 공용 기본 모델로 부적합,
 # gemini-3.6-flash 는 수요 과다(503)가 잦아 제외. flash-lite 는 매번 성공, Gemini 처리 4~5초.
