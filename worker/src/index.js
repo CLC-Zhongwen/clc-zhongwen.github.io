@@ -179,7 +179,7 @@ export async function callGemini(apiKey, model, prompt, fetchImpl = fetch) {
   try { data = await res.json(); } catch {}
   if (!res.ok || data?.error) {
     const g = data?.error?.code;
-    return { ok: false, code: GEMINI_CODE_MAP[g] || (res.status === 429 ? "busy" : res.status >= 500 ? "upstream" : "server_config"), gemini: g || res.status };
+    return { ok: false, code: GEMINI_CODE_MAP[g] || (res.status === 429 ? "busy" : res.status >= 500 ? "upstream" : "server_config"), gemini: g || res.status, detail: String(data?.error?.message || "").slice(0, 300) };
   }
   if (data?.status && data.status !== "completed") {
     const g = data.status === "incomplete" ? "incomplete" : data.errors?.[0]?.code;
@@ -249,7 +249,7 @@ export default {
     for (const model of models) {
       const r = await callGemini(env.GEMINI_API_KEY, model, prompt);
       if (r.ok) return reply({ result: r.result, model }, 200, cors);
-      console.log(JSON.stringify({ event: "gemini_error", model, code: r.code, gemini: r.gemini }));
+      console.log(JSON.stringify({ event: "gemini_error", model, code: r.code, gemini: r.gemini, detail: r.detail }));
       last = r;
       if (!TRY_FALLBACK.has(r.code)) break;
     }

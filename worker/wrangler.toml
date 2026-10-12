@@ -2,6 +2,12 @@ name = "cwn-coach-api"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
 
+# Worker를 서울(Google Cloud asia-northeast3) 근처 데이터센터에서 실행.
+# 고정하지 않으면 한국 접속도 홍콩(HKG)에서 실행될 수 있는데, 홍콩은 Gemini API 이용 불가 지역이라
+# "User location is not supported" 오류가 난다.
+[placement]
+region = "gcp:asia-northeast3"
+
 [vars]
 # 이 웹앱을 올린 주소만 AI 서버를 부를 수 있다. 쉼표로 여러 개. 끝에 / 없이, 경로 없이 도메인까지만.
 # 예) GitHub 아이디가 seunggi 이면 "https://seunggi.github.io"
