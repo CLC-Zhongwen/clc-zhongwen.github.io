@@ -3,6 +3,9 @@
 한국어나 서툰 중국어 문장을 넣으면 회화체(口语)나 서면어(书面语)로 다듬어 주는 중국어 작문 코치예요.
 교정 이유, 병음, 핵심 어휘와 HSK 급수, 문법 설명, 다른 문체로 쓴 문장도 함께 보여 줍니다.
 
+**공개 주소**: https://seunggih633-netizen.github.io/chinese-writing-note/
+**AI 서버**: https://cwn-coach-api.cwn-coach-api.workers.dev (상태 확인: `/api/health`)
+
 ```
 [학생 브라우저]  ── 문장·문체·학습자 정보 ──▶  [Cloudflare Worker (무료)]  ── 프롬프트 + API 키 ──▶  [Gemini API (무료 등급)]
  GitHub Pages(무료)                              키 보관, 요청 제한, 입력 검사
@@ -53,6 +56,12 @@ npx wrangler secret put GEMINI_API_KEY
 
 두 번째 명령은 키를 물어보는데, 1단계에서 만든 키를 붙여 넣으면 돼요. 키는 Cloudflare에 비밀값으로만 저장되고 코드나 GitHub에는 남지 않아요.
 
+- **명령 대신 대시보드로 등록해도 돼요** (현재 배포는 이 방법을 썼어요): Workers & Pages → cwn-coach-api → Settings → Variables and Secrets → Add → Type **Secret**, 이름 `GEMINI_API_KEY`.
+- **로그인 권한을 최소로 하고 싶으면**: `npx wrangler login --scopes account:read user:read workers:write workers_scripts:write workers_tail:read`. 이 권한으로 `deploy`와 `tail`(로그 보기)은 되지만, `secret put`은 전체 권한으로 다시 로그인하라고 요구해요. 그래서 키는 대시보드로 등록해요.
+- `wrangler.toml`의 `[placement] region = "gcp:asia-northeast3"` 설정은 지우지 마세요.
+  - 이 설정이 없으면 한국 접속이 홍콩 데이터센터에서 처리될 수 있어요.
+  - 홍콩은 Gemini API 이용 불가 지역이라 `User location is not supported` 오류가 나요. 실제 배포 중에 이 오류를 겪었어요.
+
 배포가 끝나면 `https://cwn-coach-api.<계정이름>.workers.dev` 같은 주소가 나와요. 이 주소 뒤에 `/api/health`를 붙여 브라우저로 열었을 때 `{"ok":true,"configured":true}`가 나오면 키 설정까지 끝난 거예요.
 
 ## 3. GitHub Pages 배포 (웹앱 화면, 무료)
@@ -99,8 +108,10 @@ python tests/mock_server.py
 - 요청 한 번에 CPU 10ms까지 쓸 수 있는데, Gemini 응답을 기다리는 시간은 이 CPU 시간에 들어가지 않아요.
 - 실제로는 Gemini 무료 한도가 Worker 한도보다 훨씬 먼저 차요.
 - 분당 요청 제한(같은 IP에서 60초에 5회)은 Cloudflare Rate Limiting 바인딩을 써요.
-  - 이 기능이 무료 플랜에서 되는지는 문서에 명시돼 있지 않아요. 배포할 때 오류가 나면 `wrangler.toml`의 `[[ratelimits]]` 부분을 지우고 배포하세요. 코드는 이 기능이 없어도 동작해요.
-  - 이 제한은 Cloudflare 지역별로 대략 계산돼서 정확하지 않아요. 학교 와이파이처럼 여러 명이 같은 IP를 쓰면 함께 제한될 수 있어요.
+  - 무료 플랜에서 배포와 동작을 실제로 확인했어요(2026-10-12).
+  - 공식 문서 설명대로 대략적으로 계산돼요. 실제 테스트에서는 연속 요청 몇 번이 더 통과한 뒤부터 429로 막혔어요.
+  - 학교 와이파이처럼 여러 명이 같은 IP를 쓰면 함께 제한될 수 있어요.
+- 문제가 생기면 `worker` 폴더에서 `npx wrangler tail cwn-coach-api`를 실행해요. Gemini 오류 코드와 메시지가 실시간으로 보여요(키는 로그에 남지 않아요).
 
 **GitHub Pages**: 정적 사이트라 비용이 없어요. 무료 계정은 공개 저장소에서만 쓸 수 있어요.
 
