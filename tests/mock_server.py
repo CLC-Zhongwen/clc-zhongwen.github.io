@@ -54,6 +54,19 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def do_GET(self):
+        # 실제 config.js 에는 배포된 Worker 주소가 들어 있으므로, 로컬 테스트에서는 이 모의 서버(/api/coach)를 쓰게 한다.
+        if self.path.split("?")[0] == "/config.js":
+            data = b'window.CWN_CONFIG = { apiUrl: "" };\n'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/javascript; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(data)
+            return
+        return super().do_GET()
+
     def do_POST(self):
         if self.path != "/api/coach":
             return self.send_json(404, {"error": {"code": "not_found", "message": "없는 주소예요."}})

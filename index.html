@@ -63,8 +63,7 @@ button { cursor: pointer; }
 header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper);
   padding-block: 14px 10px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .brand { display: flex; align-items: baseline; gap: 8px; margin-right: auto; }
-.brand b { font-family: var(--f-hanzi); font-size: 22px; font-weight: 700; letter-spacing: .04em; }
-.brand span { color: var(--muted); font-size: 13px; }
+.brand b { font-family: var(--f-body); font-size: 20px; font-weight: 600; letter-spacing: -.01em; }
 .tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
 .tabs button { border: 0; background: none; padding: 6px 14px; border-radius: 999px; font-size: 14px; color: var(--muted); }
 .tabs button[aria-selected="true"] { background: var(--jade); color: var(--on-jade); font-weight: 600; }
@@ -172,7 +171,7 @@ textarea { width: 100%; min-height: 104px; resize: vertical; border: 1px solid v
 
 <div class="wrap">
   <header>
-    <div class="brand"><b lang="zh">写作本</b><span>중문 작문 노트</span></div>
+    <div class="brand"><b>중문 작문 노트</b></div>
     <nav class="tabs" role="tablist">
       <button role="tab" id="tab-write" aria-selected="true" data-view="write">작문</button>
       <button role="tab" id="tab-history" aria-selected="false" data-view="history">기록</button>
@@ -197,7 +196,7 @@ textarea { width: 100%; min-height: 104px; resize: vertical; border: 1px solid v
         <span class="status" id="status" role="status" aria-live="polite"></span>
         <span class="status count" id="count"></span>
       </div>
-      <p class="privacy">입력한 문장은 AI 피드백을 위해 Google Gemini API(무료 등급)로 보내져요. 무료 등급에서는 Google이 입력 내용을 서비스 개선에 쓰고 사람이 검토할 수 있으니, 이름·연락처·학번 같은 개인정보는 넣지 마세요.</p>
+      <p class="privacy">입력한 문장은 AI 피드백을 위해 외부 서비스로 전송될 수 있습니다. 이름, 연락처, 학번 등 개인정보는 입력하지 마세요.</p>
     </div>
 
     <div id="result"></div>
