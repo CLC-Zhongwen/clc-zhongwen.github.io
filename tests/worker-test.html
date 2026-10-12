@@ -8,7 +8,7 @@
 <p>worker/src/index.js 를 브라우저에서 불러와, Gemini 응답을 흉내 낸 가짜 데이터로 실행한다. 실제 Gemini는 부르지 않는다.</p>
 <pre id="out"></pre>
 <script type="module">
-import worker, { callGemini, parseModelJson, sanitizeProfile, buildPrompt, normalizeResult } from "../worker/src/index.js";
+import worker, { callGemini, parseModelJson, sanitizeProfile, buildPrompt, normalizeResult, resetCooldown } from "../worker/src/index.js";
 
 const out = document.getElementById("out");
 const results = [];
@@ -35,7 +35,7 @@ const req = (body, { origin = ORIGIN, method = "POST", path = "/api/coach", ip =
   headers: new Headers({ "Content-Type": "application/json", Origin: origin, "CF-Connecting-IP": ip }),
   text: async () => (typeof body === "string" ? body : JSON.stringify(body)),
 });
-const run = async (r, e = env()) => { const res = await worker.fetch(r, e); let j = null; try { j = await res.json(); } catch {} return { res, j }; };
+const run = async (r, e = env(), keepCooldown = false) => { if (!keepCooldown) resetCooldown(); const res = await worker.fetch(r, e); let j = null; try { j = await res.json(); } catch {} return { res, j }; };
 
 // 1. success path + request shape
 queue = [geminiOk(GOOD)]; calls = [];
@@ -131,6 +131,23 @@ check("맞는 토큰(줄바꿈 무시) → 지정 모델 사용", calls[0].body.
 queue = [geminiOk(GOOD)];
 ({ res } = await run(req({ text: "你好" })));
 check("응답에 Gemini 처리 시간 헤더", /gemini;dur=\d+/.test(res.headers.get("Server-Timing") || ""));
+
+// 5d-2. 대체 모델 여러 개 + 한도 걸린 모델 잠시 건너뛰기
+const chain = env({ GEMINI_FALLBACK_MODEL: "m-lite, gemini-3.8-flash", GEMINI_THINKING: "minimal" });
+queue = [geminiErr(429, "rate_limit_exceeded"), geminiErr(503, "service_unavailable"), geminiOk(GOOD)]; calls = [];
+({ res, j } = await run(req({ text: "你好" }), chain));
+check("기본·1차 대체 실패 → 2차 대체(3.8-flash)로 성공", res.status === 200 && j.model === "gemini-3.8-flash" && calls.map((c) => c.body.model).join() === "m-main,m-lite,gemini-3.8-flash");
+check("3.8-flash 에는 minimal 대신 low 로 요청", calls[2].body.generation_config.thinking_level === "low" && calls[0].body.generation_config.thinking_level === "minimal");
+queue = [geminiOk(GOOD)]; calls = [];
+({ res, j } = await run(req({ text: "你好" }), chain, true));
+check("직후 요청은 쉬는 중인 기본·1차 대체를 건너뜀", calls.length === 1 && calls[0].body.model === "gemini-3.8-flash");
+queue = [{ status: 429, body: { error: { code: "too_many_requests", message: "limit: 20 requests per day" } } }, geminiErr(429, "rate_limit_exceeded"), geminiErr(429, "rate_limit_exceeded")];
+({ res, j } = await run(req({ text: "你好" }), chain));
+check("모두 실패 시 '하루 한도 소진' 안내를 우선", res.status === 429 && j.error.code === "daily_quota");
+queue = [geminiErr(429, "rate_limit_exceeded"), geminiErr(429, "rate_limit_exceeded"), geminiErr(429, "rate_limit_exceeded")]; await run(req({ text: "你好" }), chain);
+queue = [geminiOk(GOOD)]; calls = [];
+({ res } = await run(req({ text: "你好" }), chain, true));
+check("모든 모델이 쉬는 중이면 그래도 기본 모델부터 시도", res.status === 200 && calls[0].body.model === "m-main");
 
 // 5e. 수준별 프롬프트가 실제로 다름
 const p4 = buildPrompt("x", "spoken", sanitizeProfile({ level: "중급 (HSK 4)" }));

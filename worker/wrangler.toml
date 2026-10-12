@@ -16,7 +16,8 @@ ALLOWED_ORIGINS = "https://clc-zhongwen.github.io"
 # 2026-10-12 측정: gemini-3.8-flash 는 무료 등급 하루 20회 한도라 학과 공용 기본 모델로 부적합,
 # gemini-3.6-flash 는 수요 과다(503)가 잦아 제외. flash-lite 는 매번 성공, Gemini 처리 4~5초.
 GEMINI_MODEL = "gemini-3.5-flash-lite"
-GEMINI_FALLBACK_MODEL = "gemini-3.1-flash-lite"
+# 대체 모델은 쉼표로 여러 개, 앞에서부터 시도. 3.8-flash 는 품질이 가장 좋지만 무료 하루 20회·분당 5회라 마지막 예비로만 둔다.
+GEMINI_FALLBACK_MODEL = "gemini-3.1-flash-lite,gemini-3.8-flash"
 # flash-lite 는 low 와 minimal 의 속도·품질 차이가 측정되지 않아(생각 토큰 0) minimal 사용
 GEMINI_THINKING = "minimal"
 

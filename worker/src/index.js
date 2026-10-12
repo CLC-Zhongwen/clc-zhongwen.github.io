@@ -57,6 +57,14 @@ const GEMINI_CODE_MAP = {
 };
 const TRY_FALLBACK = new Set(["busy", "daily_quota", "server_config", "upstream", "bad_output"]);
 
+// 한도에 걸린 모델을 잠시 건너뛰어, 매 요청이 실패할 모델을 먼저 기다리지 않게 한다 (Worker 인스턴스마다 따로 기억).
+const COOLDOWN_MS = { busy: 30_000, daily_quota: 10 * 60_000 };
+const cooldownUntil = new Map();
+export const resetCooldown = () => cooldownUntil.clear(); // 테스트용
+
+// gemini-3.8-flash·2.5 계열은 thinking_level "minimal" 을 지원하지 않으므로 "low" 로 바꿔 보낸다 (Gemini 문서 기준).
+const thinkingFor = (model, level) => (level === "minimal" && /gemini-(3\.8-flash|2\.5-)/.test(model) ? "low" : level);
+
 // ---------- prompt ----------
 export function sanitizeProfile(p) {
   p = p && typeof p === "object" ? p : {};
@@ -278,17 +286,26 @@ export default {
     const debugToken = String(env.DEBUG_TOKEN || "").trim();
     const debug = debugToken.length >= 16 && String(request.headers.get("X-Debug-Token") || "").trim() === debugToken;
     const thinking = debug && body.debugThinking ? String(body.debugThinking) : env.GEMINI_THINKING || "low";
-    const models = debug && body.debugModel
-      ? [String(body.debugModel)]
-      : [...new Set([env.GEMINI_MODEL || "gemini-3.8-flash", env.GEMINI_FALLBACK_MODEL].filter(Boolean))];
+    // 기본 모델 → 대체 모델(쉼표로 여러 개) 순서로 시도한다. 한도에 걸린 모델은 잠시 건너뛰되, 모두 쉬는 중이면 그래도 시도한다.
+    const configured = [env.GEMINI_MODEL || "gemini-3.5-flash-lite", ...String(env.GEMINI_FALLBACK_MODEL || "").split(",")]
+      .map((m) => m.trim()).filter(Boolean);
+    const all = debug && body.debugModel ? [String(body.debugModel)] : [...new Set(configured)];
+    const now = Date.now();
+    const ready = all.filter((m) => !(cooldownUntil.get(m) > now));
+    const models = ready.length ? ready : all;
     let last = { code: "upstream" };
     for (const model of models) {
       const t0 = Date.now();
-      const r = await callGemini(env.GEMINI_API_KEY, model, prompt, fetch, thinking);
+      const r = await callGemini(env.GEMINI_API_KEY, model, prompt, fetch, thinkingFor(model, thinking));
       const timing = { "Server-Timing": `gemini;dur=${Date.now() - t0}` };
-      if (r.ok) return reply({ result: r.result, model, ...(debug ? { usage: r.usage, promptChars: prompt.length } : {}) }, 200, cors, timing);
+      if (r.ok) {
+        cooldownUntil.delete(model);
+        return reply({ result: r.result, model, ...(debug ? { usage: r.usage, promptChars: prompt.length } : {}) }, 200, cors, timing);
+      }
       console.log(JSON.stringify({ event: "gemini_error", model, code: r.code, gemini: r.gemini, detail: r.detail }));
-      last = r;
+      if (COOLDOWN_MS[r.code]) cooldownUntil.set(model, Date.now() + COOLDOWN_MS[r.code]);
+      // 사용자에게는 "하루 한도 소진"을 다른 일시적 오류보다 우선해서 알린다.
+      if (last.code !== "daily_quota" || r.code === "daily_quota") last = r;
       if (!TRY_FALLBACK.has(r.code)) break;
     }
     return fail(last.code, cors);
