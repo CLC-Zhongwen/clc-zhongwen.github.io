@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="한국어나 서툰 중국어를 넣으면 회화체·서면어로 다듬어 주는 중국어 작문 코치">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://cwn-coach-api.cwn-coach-api.workers.dev; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
 <title>중문 작문 노트</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -192,7 +194,7 @@ textarea { width: 100%; min-height: 104px; resize: vertical; border: 1px solid v
       <div class="row">
         <button class="btn primary" id="ask">코칭 받기</button>
         <button class="btn" id="stop" hidden>멈추기</button>
-        <span class="status" id="status"></span>
+        <span class="status" id="status" role="status" aria-live="polite"></span>
         <span class="status count" id="count"></span>
       </div>
       <p class="privacy">입력한 문장은 AI 피드백을 위해 Google Gemini API(무료 등급)로 보내져요. 무료 등급에서는 Google이 입력 내용을 서비스 개선에 쓰고 사람이 검토할 수 있으니, 이름·연락처·학번 같은 개인정보는 넣지 마세요.</p>
@@ -339,12 +341,20 @@ textarea { width: 100%; min-height: 104px; resize: vertical; border: 1px solid v
   };
 
   async function ask() {
+    if (ctl) return; // 이전 요청이 끝나기 전에는 다시 보내지 않는다 (Ctrl+Enter 연타 포함)
     const text = $("input").value.trim();
     if (!text) { setStatus("문장을 먼저 적어 주세요.", true); $("input").focus(); return; }
     if ([...text].length > MAX_INPUT) { setStatus(`한 번에 ${MAX_INPUT}자까지 넣을 수 있어요. 한두 문장씩 나눠 주세요.`, true); return; }
     ctl = new AbortController();
     $("ask").disabled = true; $("stop").hidden = false;
-    setStatus("문장을 살펴보는 중… (보통 5~30초)");
+    // 기다리는 동안 경과 시간과 단계 안내를 1초마다 갱신한다.
+    const started = Date.now();
+    const tick = () => {
+      const s = Math.floor((Date.now() - started) / 1000);
+      setStatus((s < 3 ? "문장을 읽는 중…" : s < 9 ? "교정과 설명을 쓰는 중…" : "거의 다 됐어요. 조금만 기다려 주세요…") + " " + s + "초");
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
     const mode = state.mode;
     const p = state.profile;
     try {
@@ -371,6 +381,7 @@ textarea { width: 100%; min-height: 104px; resize: vertical; border: 1px solid v
       if (e?.code === "cancelled") setStatus("멈췄어요.");
       else setStatus(e?.message || ERR[e?.code] || ERR.upstream, true);
     } finally {
+      clearInterval(timer);
       $("ask").disabled = false; $("stop").hidden = true; ctl = null;
     }
   }

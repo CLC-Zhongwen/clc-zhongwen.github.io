@@ -11,10 +11,14 @@ region = "gcp:asia-northeast3"
 [vars]
 # 이 웹앱을 올린 주소만 AI 서버를 부를 수 있다. 쉼표로 여러 개. 끝에 / 없이, 경로 없이 도메인까지만.
 # 예) GitHub 아이디가 seunggi 이면 "https://seunggi.github.io"
-ALLOWED_ORIGINS = "https://seunggih633-netizen.github.io,http://localhost:8000"
+ALLOWED_ORIGINS = "https://zhongwen-note.github.io,https://seunggih633-netizen.github.io"
 # 기본 모델과, 바쁘거나 무료 한도를 다 썼을 때 대신 쓸 모델 (둘 다 Gemini API 가격표에서 무료 등급 제공 모델)
-GEMINI_MODEL = "gemini-3.8-flash"
-GEMINI_FALLBACK_MODEL = "gemini-3.5-flash-lite"
+# 2026-10-12 측정: gemini-3.8-flash 는 무료 등급 하루 20회 한도라 학과 공용 기본 모델로 부적합,
+# gemini-3.6-flash 는 수요 과다(503)가 잦아 제외. flash-lite 는 매번 성공, Gemini 처리 4~5초.
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+GEMINI_FALLBACK_MODEL = "gemini-3.1-flash-lite"
+# flash-lite 는 low 와 minimal 의 속도·품질 차이가 측정되지 않아(생각 토큰 0) minimal 사용
+GEMINI_THINKING = "minimal"
 
 # 같은 IP에서 60초에 5번까지만 코칭 요청 허용
 [[ratelimits]]
@@ -23,6 +27,15 @@ namespace_id = "1001"
 
   [ratelimits.simple]
   limit = 5
+  period = 60
+
+# 모든 IP를 합친 전체 처리량 상한: 60초에 30번 (직접 호출로 IP를 바꿔 가며 무료 한도를 소진하는 것을 늦춘다)
+[[ratelimits]]
+name = "GLOBAL_LIMITER"
+namespace_id = "1002"
+
+  [ratelimits.simple]
+  limit = 30
   period = 60
 
 # GEMINI_API_KEY 는 여기에 적지 않는다. 아래 명령으로 비밀값(secret)으로 등록:
