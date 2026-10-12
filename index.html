@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="한국어나 서툰 중국어를 넣으면 회화체·서면어로 다듬어 주는 중국어 작문 코치">
+<title>중문 작문 노트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: one 720px column on manuscript-grid paper (稿纸); tabs on top, result cards stack below the composer. */
+:root {
+  --paper: #f4f7f4;
+  --surface: #ffffff;
+  --ink: #1b2420;
+  --muted: #5b6a63;
+  --line: #d6e1da;
+  --grid: #bcd6c6;
+  --jade: #1d7552;
+  --jade-soft: #e2f0e8;
+  --cinnabar: #b8382a;
+  --cinnabar-soft: #fbe8e4;
+  --gold: #85650f;
+  --gold-soft: #f5eed8;
+  --on-jade: #ffffff;
+  --f-hanzi: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --f-pinyin: "Noto Sans", "Segoe UI", Arial, sans-serif;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #101613; --surface: #171f1b; --ink: #e5ece8; --muted: #98aaa1; --line: #2a3630;
+    --grid: #2e4a3c; --jade: #5cc497; --jade-soft: #17322a; --cinnabar: #ef7d6d; --cinnabar-soft: #3a1f1a;
+    --gold: #dfbf68; --gold-soft: #2e2712; --on-jade: #0d1a14; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #101613; --surface: #171f1b; --ink: #e5ece8; --muted: #98aaa1; --line: #2a3630;
+  --grid: #2e4a3c; --jade: #5cc497; --jade-soft: #17322a; --cinnabar: #ef7d6d; --cinnabar-soft: #3a1f1a;
+  --gold: #dfbf68; --gold-soft: #2e2712; --on-jade: #0d1a14; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.privacy { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+.count { margin-left: auto; font-variant-numeric: tabular-nums; }
+body {
+  margin: 0;
+  background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6;
+  padding-inline: 16px; padding-block: 0 48px;
+}
+.wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
+[lang="zh"] { font-family: var(--f-hanzi); }
+
+/* header + tabs */
+header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper);
+  padding-block: 14px 10px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 8px; margin-right: auto; }
+.brand b { font-family: var(--f-hanzi); font-size: 22px; font-weight: 700; letter-spacing: .04em; }
+.brand span { color: var(--muted); font-size: 13px; }
+.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.tabs button { border: 0; background: none; padding: 6px 14px; border-radius: 999px; font-size: 14px; color: var(--muted); }
+.tabs button[aria-selected="true"] { background: var(--jade); color: var(--on-jade); font-weight: 600; }
+
+/* stats strip */
+.stats { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stats strong { color: var(--ink); font-size: 15px; }
+.dots { display: inline-flex; gap: 4px; vertical-align: middle; margin-left: 6px; }
+.dots i { width: 14px; height: 14px; border: 1px solid var(--grid); display: inline-block; }
+.dots i.on { background: var(--jade); border-color: var(--jade); }
+
+/* composer */
+.composer { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; align-self: flex-start; }
+.seg button { border: 0; background: none; padding: 7px 14px; font-size: 14px; display: flex; gap: 6px; align-items: baseline; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button small { font-family: var(--f-hanzi); color: var(--muted); font-size: 12px; }
+.seg button[aria-pressed="true"] { background: var(--jade-soft); color: var(--jade); font-weight: 600; }
+.seg button[aria-pressed="true"] small { color: var(--jade); }
+.mode-hint { font-size: 13px; color: var(--muted); margin: -4px 0 0; }
+textarea { width: 100%; min-height: 104px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+  background: var(--paper); line-height: 1.7; font-size: 16px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 14px; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+.btn.primary { background: var(--jade); border-color: var(--jade); color: var(--on-jade); font-weight: 600; padding: 9px 18px; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.danger { color: var(--cinnabar); border-color: var(--cinnabar); }
+.status { font-size: 13px; color: var(--muted); }
+.status.err { color: var(--cinnabar); }
+.icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; width: 34px; height: 34px; display: inline-grid; place-items: center; flex: none; color: var(--jade); }
+.icon-btn svg { width: 16px; height: 16px; }
+
+/* result */
+.result { display: flex; flex-direction: column; gap: 14px; }
+.example-tag { align-self: flex-start; font-size: 12px; letter-spacing: .06em; color: var(--gold); background: var(--gold-soft); padding: 2px 10px; border-radius: 999px; }
+.final { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; }
+.final-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.label { font-size: 12px; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
+.score { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); }
+.score b { font-size: 20px; color: var(--jade); }
+.sentence {
+  font-family: var(--f-hanzi); font-size: 26px; line-height: 2.5; padding: 4px 6px;
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px);
+  background-size: 100% 65px; background-position: 0 58px;
+  word-break: break-all;
+}
+.sentence ruby { ruby-position: over; margin: 0 1px; }
+.sentence rt { font-family: var(--f-pinyin); font-size: 12px; color: var(--jade); letter-spacing: 0; }
+.sentence.small { font-size: 20px; line-height: 2.3; background-size: 100% 46px; background-position: 0 41px; }
+.ko { color: var(--muted); }
+.pinyin-line { font-family: var(--f-pinyin); color: var(--muted); font-size: 14px; }
+.summary { padding: 12px 14px; border-left: 3px solid var(--jade); background: var(--jade-soft); border-radius: 0 8px 8px 0; }
+
+.section { display: flex; flex-direction: column; gap: 8px; }
+.section h3 { margin: 6px 0 0; font-size: 15px; display: flex; align-items: baseline; gap: 8px; }
+.section h3 small { font-family: var(--f-hanzi); color: var(--muted); font-weight: 500; font-size: 13px; }
+.list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.list > div { padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.list > div + div { border-top: 1px solid var(--line); }
+.chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 4px; background: var(--paper); border: 1px solid var(--line); color: var(--muted); }
+.fix { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-family: var(--f-hanzi); font-size: 18px; }
+.fix del { color: var(--cinnabar); background: var(--cinnabar-soft); text-decoration-thickness: 1.5px; padding: 0 4px; border-radius: 3px; }
+.fix ins { color: var(--jade); background: var(--jade-soft); text-decoration: none; padding: 0 4px; border-radius: 3px; font-weight: 700; }
+.fix .arrow { color: var(--muted); font-family: var(--f-body); font-size: 14px; }
+.why { font-size: 14px; }
+.vocab { display: grid !important; grid-template-columns: auto 1fr auto; gap: 2px 12px !important; align-items: center; }
+.vocab .w { font-family: var(--f-hanzi); font-size: 20px; grid-row: span 2; }
+.vocab .w small { display: block; font-family: var(--f-pinyin); font-size: 12px; color: var(--jade); }
+.vocab .m { font-weight: 500; }
+.vocab .t { font-size: 13px; color: var(--muted); grid-column: 2 / 4; }
+.vocab .side { display: flex; gap: 6px; align-items: center; }
+.hsk { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px; background: var(--gold-soft); color: var(--gold); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.vocab .icon-btn { width: 28px; height: 28px; }
+.ex { font-family: var(--f-hanzi); font-size: 17px; }
+.ex-p { font-family: var(--f-pinyin); font-size: 13px; color: var(--jade); }
+.other { border: 1px dashed var(--grid); border-radius: var(--r); padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+
+/* review */
+.review { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.review .q { font-size: 16px; }
+
+/* history */
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.toolbar input { flex: 1 1 200px; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 12px; }
+.entries { display: flex; flex-direction: column; gap: 10px; }
+.entry { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.entry > button.head { width: 100%; text-align: left; border: 0; background: none; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.entry .meta { font-size: 12px; color: var(--muted); display: flex; gap: 8px; font-variant-numeric: tabular-nums; }
+.entry .zh { font-family: var(--f-hanzi); font-size: 18px; }
+.entry .body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 14px; }
+.empty { text-align: center; color: var(--muted); padding: 32px 16px; border: 1px dashed var(--line); border-radius: var(--r); }
+
+/* settings */
+.form { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); min-width: 0; }
+.form .full { grid-column: 1 / -1; }
+.form input, .form select { border: 1px solid var(--line); background: var(--paper); border-radius: 8px; padding: 8px 10px; font-size: 15px; color: var(--ink); width: 100%; }
+.note { font-size: 13px; color: var(--muted); }
+@media (max-width: 520px) { .form { grid-template-columns: 1fr; } .sentence { font-size: 22px; } }
+@media (prefers-reduced-motion: no-preference) { .result { animation: rise .25s ease-out; } @keyframes rise { from { transform: translateY(6px); } to { transform: none; } } }
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><b lang="zh">写作本</b><span>중문 작문 노트</span></div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" id="tab-write" aria-selected="true" data-view="write">작문</button>
+      <button role="tab" id="tab-history" aria-selected="false" data-view="history">기록</button>
+      <button role="tab" id="tab-settings" aria-selected="false" data-view="settings">설정</button>
+    </nav>
+  </header>
+
+  <!-- 작문 -->
+  <section id="view-write" class="wrap" style="gap:18px">
+    <div class="stats" id="stats"></div>
+
+    <div class="composer">
+      <div class="seg" role="group" aria-label="문체">
+        <button id="mode-spoken" aria-pressed="true" data-mode="spoken">회화체 <small>口语</small></button>
+        <button id="mode-written" aria-pressed="false" data-mode="written">서면어 <small>书面语</small></button>
+      </div>
+      <p class="mode-hint" id="mode-hint"></p>
+      <textarea id="input" placeholder="한국어로 하고 싶은 말, 또는 서툴러도 괜찮은 중국어 문장을 적어 보세요.&#10;예) 어제 친구랑 훠궈 먹었는데 我们觉得很贵了"></textarea>
+      <div class="row">
+        <button class="btn primary" id="ask">코칭 받기</button>
+        <button class="btn" id="stop" hidden>멈추기</button>
+        <span class="status" id="status"></span>
+        <span class="status count" id="count"></span>
+      </div>
+      <p class="privacy">입력한 문장은 AI 피드백을 위해 Google Gemini API(무료 등급)로 보내져요. 무료 등급에서는 Google이 입력 내용을 서비스 개선에 쓰고 사람이 검토할 수 있으니, 이름·연락처·학번 같은 개인정보는 넣지 마세요.</p>
+    </div>
+
+    <div id="result"></div>
+    <div id="review"></div>
+  </section>
+
+  <!-- 기록 -->
+  <section id="view-history" class="wrap" style="gap:14px" hidden>
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="중국어·한국어로 검색">
+      <div class="seg" role="group" aria-label="문체 필터">
+        <button id="f-all" aria-pressed="true" data-filter="all">전체</button>
+        <button id="f-spoken" aria-pressed="false" data-filter="spoken">회화</button>
+        <button id="f-written" aria-pressed="false" data-filter="written">서면</button>
+      </div>
+    </div>
+    <div class="entries" id="entries"></div>
+  </section>
+
+  <!-- 설정 -->
+  <section id="view-settings" class="wrap" style="gap:12px" hidden>
+    <div class="form">
+      <label>신분
+        <select id="s-role"><option value="">선택 안 함</option><option>학생</option><option>교수</option><option>기타</option></select>
+      </label>
+      <label id="s-grade-wrap">학년
+        <select id="s-grade"><option value="">선택 안 함</option><option>1학년</option><option>2학년</option><option>3학년</option><option>4학년</option><option>대학원 석사과정</option><option>대학원 박사과정</option></select>
+      </label>
+      <label>성별
+        <select id="s-gender"><option value="">선택 안 함</option><option>남성</option><option>여성</option></select>
+      </label>
+      <label class="full">주로 중국어를 쓰는 상황
+        <input id="s-context" placeholder="예) 중국 거래처와 업무 메일, 상하이 출장, 중국인 동료와 잡담">
+      </label>
+      <label>현재 수준
+        <select id="s-level"><option value="">선택 안 함</option><option>입문 (HSK 1~2)</option><option>초급 (HSK 3)</option><option>중급 (HSK 4)</option><option>중상급 (HSK 5)</option><option>고급 (HSK 6)</option></select>
+      </label>
+      <label>기본 문체
+        <select id="s-mode"><option value="spoken">회화체 口语</option><option value="written">서면어 书面语</option></select>
+      </label>
+      <label>하루 목표 문장 수
+        <input id="s-goal" type="number" min="1" max="30" value="5">
+      </label>
+      <label>발음 속도
+        <select id="s-rate"><option value="0.7">느리게</option><option value="0.9" selected>보통</option><option value="1.1">빠르게</option></select>
+      </label>
+      <div class="full row">
+        <button class="btn primary" id="save-settings">저장</button>
+        <span class="status" id="settings-status"></span>
+      </div>
+    </div>
+    <p class="note">입력한 정보는 코칭 요청에 함께 전달돼서, 내 신분·학년·상황에 맞는 말투로 문장을 다듬어 줍니다. 예) "3학년 학생이 교수님께 보내는 서면어로". 상황 칸에는 개인정보를 적지 마세요.</p>
+    <p class="note" id="storage-note"></p>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const SPEAK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+  const MODE_TEXT = {
+    spoken: { ko: "회화체", zh: "口语", hint: "친구·동료와 실제로 말할 때처럼 자연스러운 구어로 다듬어요." },
+    written: { ko: "서면어", zh: "书面语", hint: "메일·보고서·공지처럼 글로 쓸 때의 격식 있는 표현으로 다듬어요." },
+  };
+  const DEFAULT_PROFILE = { role: "", grade: "", gender: "", context: "", level: "", mode: "spoken", goal: 5, rate: 0.9 };
+
+  // ---------- example (shown until the first saved sentence) ----------
+  const EXAMPLE = {
+    input: "어제 친구랑 훠궈 먹었는데 너무 비쌌어. 我昨天和朋友吃了火锅，但是很贵了",
+    mode: "spoken",
+    result: {
+      inputType: "mixed",
+      intentKo: "어제 친구랑 훠궈 먹으러 갔는데, 너무 비쌌어!",
+      final: {
+        tokens: [{h:"我",p:"wǒ"},{h:"昨天",p:"zuótiān"},{h:"跟",p:"gēn"},{h:"朋友",p:"péngyou"},{h:"去",p:"qù"},{h:"吃",p:"chī"},{h:"火锅",p:"huǒguō"},{h:"了",p:"le"},{h:"，",p:""},{h:"结果",p:"jiéguǒ"},{h:"太",p:"tài"},{h:"贵",p:"guì"},{h:"了",p:"le"},{h:"！",p:""}],
+        hanzi: "我昨天跟朋友去吃火锅了，结果太贵了！",
+        pinyin: "Wǒ zuótiān gēn péngyou qù chī huǒguō le, jiéguǒ tài guì le!",
+      },
+      score: 70,
+      summary: "뜻은 잘 전달돼요. 정도 표현과 연결어만 다듬으면 원어민처럼 들립니다.",
+      corrections: [
+        { kind: "호응", from: "很贵了", to: "太贵了", why: "'很+형용사' 뒤에 了를 붙이면 어색해요. '너무 ~했다'는 감탄은 '太…了' 틀로 씁니다." },
+        { kind: "표현", from: "但是", to: "结果", why: "但是도 틀리진 않지만, '먹었는데 (알고 보니) 비쌌다'처럼 뜻밖의 결과는 회화에서 结果가 더 자연스러워요." },
+        { kind: "문체", from: "和", to: "跟", why: "말할 때는 和보다 跟을 훨씬 많이 씁니다." },
+      ],
+      vocab: [
+        { h: "结果", p: "jiéguǒ", hsk: "4", ko: "결국, 그랬더니", tip: "앞 일의 뜻밖의 결과를 말할 때 접속사처럼 써요." },
+        { h: "跟", p: "gēn", hsk: "3", ko: "~와, ~랑", tip: "구어의 '~랑'. 跟 + 사람 + 一起/동사." },
+        { h: "贵", p: "guì", hsk: "2", ko: "비싸다", tip: "太贵了 / 有点儿贵 로 정도를 조절해요." },
+        { h: "火锅", p: "huǒguō", hsk: "급외", ko: "훠궈", tip: "'훠궈 먹으러 가다'는 去吃火锅." },
+      ],
+      grammar: [
+        { pattern: "太 + 형용사 + 了", why: "'너무 ~하다'는 감탄. 了는 생략하지 않는 편이 자연스러워요.", ex: "这个菜太辣了。", exP: "Zhège cài tài là le.", exKo: "이 요리 너무 매워." },
+        { pattern: "…，结果…", why: "앞 행동을 했더니 뒤의 결과가 나왔다는 흐름. 주로 예상과 다른 결과에 씁니다.", ex: "我等了一个小时，结果他没来。", exP: "Wǒ děngle yí ge xiǎoshí, jiéguǒ tā méi lái.", exKo: "한 시간 기다렸는데 결국 걔가 안 왔어." },
+      ],
+      otherRegister: { hanzi: "昨日与友人共进火锅，然价格颇为昂贵。", pinyin: "Zuórì yǔ yǒurén gòng jìn huǒguō, rán jiàgé pōwéi ángguì.", note: "서면어에서는 与·共进·然·颇为 같은 어휘로 바꾸면 글에 어울려요." },
+    },
+  };
+
+  // ---------- state ----------
+  const state = { mode: "spoken", filter: "all", query: "", entries: [], profile: { ...DEFAULT_PROFILE }, current: null, openId: null, confirmDel: null, reviewId: null, reviewShown: false };
+
+  // ---------- storage: this browser's localStorage ----------
+  const LS_E = "cwn.entries", LS_P = "cwn.profile";
+  const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
+  const store = {
+    async addEntry(e) {
+      e.id = "l" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const next = [e, ...state.entries];
+      if (!lsSet(LS_E, next)) throw { code: "storage_full" };
+      state.entries = next; render();
+    },
+    async deleteEntry(id) {
+      state.entries = state.entries.filter((x) => x.id !== id); lsSet(LS_E, state.entries); render();
+    },
+    async saveProfile(p) {
+      state.profile = p;
+      if (!lsSet(LS_P, p)) throw { code: "storage_full" };
+    },
+  };
+
+  function loadLocal() {
+    const e = lsGet(LS_E, []);
+    state.entries = Array.isArray(e) ? e : [];
+    state.profile = { ...DEFAULT_PROFILE, ...lsGet(LS_P, {}) };
+    state.mode = state.profile.mode || "spoken";
+  }
+
+  // ---------- AI coaching API (Cloudflare Worker -> Gemini) ----------
+  const MAX_INPUT = 300;
+  const API_URL = String(window.CWN_CONFIG?.apiUrl || "").replace(/\/$/, "") + "/api/coach";
+  let ctl = null;
+
+  const ERR = {
+    network: "AI 서버에 연결하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.",
+    not_found: "AI 서버 주소가 아직 설정되지 않았어요. 관리자에게 알려 주세요.",
+    bad_output: "AI 답변 형식이 깨졌어요. 한 번 더 눌러 주세요.",
+    upstream: "AI 서버와 연결이 잠깐 끊겼어요. 다시 눌러 주세요.",
+  };
+
+  async function ask() {
+    const text = $("input").value.trim();
+    if (!text) { setStatus("문장을 먼저 적어 주세요.", true); $("input").focus(); return; }
+    if ([...text].length > MAX_INPUT) { setStatus(`한 번에 ${MAX_INPUT}자까지 넣을 수 있어요. 한두 문장씩 나눠 주세요.`, true); return; }
+    ctl = new AbortController();
+    $("ask").disabled = true; $("stop").hidden = false;
+    setStatus("문장을 살펴보는 중… (보통 5~30초)");
+    const mode = state.mode;
+    const p = state.profile;
+    try {
+      let res;
+      try {
+        res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, mode, profile: { role: p.role, grade: p.grade, gender: p.gender, level: p.level, context: p.context } }),
+          signal: ctl.signal,
+        });
+      } catch (e) {
+        throw e?.name === "AbortError" ? { code: "cancelled" } : { code: "network" };
+      }
+      let data = null;
+      try { data = await res.json(); } catch { if (ctl.signal.aborted) throw { code: "cancelled" }; }
+      if (!res.ok || data?.error) throw { code: data?.error?.code || (res.status === 404 ? "not_found" : "upstream"), message: data?.error?.message };
+      const r = data?.result;
+      if (!r?.final?.hanzi) throw { code: "bad_output" };
+      state.current = { input: text, mode, result: r, saved: false };
+      setStatus("");
+      renderResult();
+    } catch (e) {
+      if (e?.code === "cancelled") setStatus("멈췄어요.");
+      else setStatus(e?.message || ERR[e?.code] || ERR.upstream, true);
+    } finally {
+      $("ask").disabled = false; $("stop").hidden = true; ctl = null;
+    }
+  }
+
+  // ---------- TTS ----------
+  let zhVoice = null;
+  const hasTTS = "speechSynthesis" in window;
+  function pickVoice() {
+    try {
+      const vs = speechSynthesis.getVoices();
+      zhVoice = vs.find((v) => /zh[-_]CN/i.test(v.lang)) || vs.find((v) => /^zh/i.test(v.lang) && !/HK|TW/i.test(v.lang)) || vs.find((v) => /^zh/i.test(v.lang)) || null;
+    } catch {}
+  }
+  if (hasTTS) { pickVoice(); try { speechSynthesis.onvoiceschanged = pickVoice; } catch {} }
+  function speak(text) {
+    if (!hasTTS || !text) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "zh-CN"; if (zhVoice) u.voice = zhVoice;
+      u.rate = Number(state.profile.rate) || 0.9;
+      speechSynthesis.speak(u);
+    } catch {}
+  }
+  const speakBtn = (text, label) => hasTTS ? `<button class="icon-btn" data-speak="${esc(text)}" aria-label="${esc(label || "발음 듣기")}" title="발음 듣기">${SPEAK_ICON}</button>` : "";
+
+  // ---------- rendering ----------
+  function setStatus(msg, err) { const s = $("status"); s.textContent = msg; s.classList.toggle("err", !!err); }
+  const dayKey = (t) => { const d = new Date(t); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); };
+
+  function rubySentence(final, small) {
+    const toks = Array.isArray(final.tokens) && final.tokens.length ? final.tokens : null;
+    const inner = toks
+      ? toks.map((t) => t.p ? `<ruby>${esc(t.h)}<rt>${esc(t.p)}</rt></ruby>` : `<span>${esc(t.h)}</span>`).join("")
+      : esc(final.hanzi);
+    return `<div class="sentence${small ? " small" : ""}" lang="zh">${inner}</div>`;
+  }
+
+  function resultHTML(item, opts = {}) {
+    const r = item.result || {}, m = MODE_TEXT[item.mode] || MODE_TEXT.spoken;
+    const corr = (r.corrections || []).filter((c) => c && (c.from || c.to));
+    const vocab = r.vocab || [], gram = r.grammar || [];
+    const hasScore = typeof r.score === "number";
+    let h = "";
+    if (opts.example) h += `<span class="example-tag">예시 · 코칭 결과는 이렇게 나와요</span>`;
+    if (opts.showInput) h += `<div class="note">입력: ${esc(item.input)}</div>`;
+    h += `<div class="final">
+      <div class="final-head"><span class="label">완성 문장 · ${m.ko} <span lang="zh">${m.zh}</span></span>
+        ${hasScore ? `<span class="score">내 문장 정확도 <b>${Math.max(0, Math.min(100, Math.round(r.score)))}</b>/100</span>` : ""}</div>
+      ${rubySentence(r.final || {}, false)}
+      <div class="ko">${esc(r.intentKo)}</div>
+      <div class="row">${speakBtn(r.final?.hanzi, "완성 문장 듣기")}
+        <button class="btn" data-copy="${esc(r.final?.hanzi)}">문장 복사</button>
+        ${opts.save ? (item.saved ? `<span class="status">기록에 저장됨</span>` : `<button class="btn primary" id="save-entry">기록에 추가</button>`) : ""}
+      </div>
+    </div>`;
+    if (r.summary) h += `<div class="summary">${esc(r.summary)}</div>`;
+    if (corr.length) h += `<div class="section"><h3>교정 <small>改错</small></h3><div class="list">${corr.map((c) => `
+      <div><div class="row"><span class="chip">${esc(c.kind || "표현")}</span></div>
+        <div class="fix" lang="zh">${c.from ? `<del>${esc(c.from)}</del>` : ""}<span class="arrow">→</span><ins>${esc(c.to)}</ins></div>
+        <div class="why">${esc(c.why)}</div></div>`).join("")}</div></div>`;
+    if (vocab.length) h += `<div class="section"><h3>핵심 어휘 <small>词汇</small></h3><div class="list">${vocab.map((v) => `
+      <div class="vocab"><span class="w" lang="zh">${esc(v.h)}<small>${esc(v.p)}</small></span>
+        <span class="m">${esc(v.ko)}</span>
+        <span class="side">${v.hsk ? `<span class="hsk">${/^\d$/.test(String(v.hsk)) ? "HSK " + esc(v.hsk) : esc(v.hsk)}</span>` : ""}${speakBtn(v.h, v.h + " 듣기")}</span>
+        <span class="t">${esc(v.tip)}</span></div>`).join("")}</div></div>`;
+    if (gram.length) h += `<div class="section"><h3>문법 포인트 <small>语法</small></h3><div class="list">${gram.map((g) => `
+      <div><strong lang="zh">${esc(g.pattern)}</strong><div class="why">${esc(g.why)}</div>
+        ${g.ex ? `<div class="row"><span class="ex" lang="zh">${esc(g.ex)}</span>${speakBtn(g.ex, "예문 듣기")}</div><div class="ex-p">${esc(g.exP)}</div><div class="note">${esc(g.exKo)}</div>` : ""}</div>`).join("")}</div></div>`;
+    const o = r.otherRegister;
+    if (o?.hanzi) {
+      const om = item.mode === "written" ? MODE_TEXT.spoken : MODE_TEXT.written;
+      h += `<div class="other"><span class="label">${om.ko}로 쓰면 <span lang="zh">${om.zh}</span></span>
+        <div class="row"><span class="ex" lang="zh">${esc(o.hanzi)}</span>${speakBtn(o.hanzi, "듣기")}</div>
+        <div class="ex-p">${esc(o.pinyin)}</div><div class="note">${esc(o.note)}</div></div>`;
+    }
+    return h;
+  }
+
+  function renderResult() {
+    const el = $("result");
+    if (state.current) el.innerHTML = `<div class="result">${resultHTML(state.current, { save: true })}</div>`;
+    else if (!state.entries.length) el.innerHTML = `<div class="result">${resultHTML(EXAMPLE, { example: true, showInput: true })}</div>`;
+    else el.innerHTML = "";
+  }
+
+  function renderStats() {
+    const goal = Math.max(1, Number(state.profile.goal) || 5);
+    const today = dayKey(Date.now());
+    const todayN = state.entries.filter((e) => dayKey(e.createdAt) === today).length;
+    const days = new Set(state.entries.map((e) => dayKey(e.createdAt)));
+    let streak = 0; const d = new Date();
+    if (!days.has(dayKey(d))) d.setDate(d.getDate() - 1);
+    while (days.has(dayKey(d))) { streak++; d.setDate(d.getDate() - 1); }
+    const dots = Array.from({ length: Math.min(goal, 12) }, (_, i) => `<i class="${i < todayN ? "on" : ""}"></i>`).join("");
+    $("stats").innerHTML = `<span>오늘 <strong>${todayN}</strong>/${goal}<span class="dots" aria-hidden="true">${dots}</span></span>
+      <span>연속 <strong>${streak}</strong>일</span><span>누적 <strong>${state.entries.length}</strong>문장</span>`;
+  }
+
+  function renderReview() {
+    const el = $("review");
+    if (state.entries.length < 2) { el.innerHTML = ""; return; }
+    let e = state.entries.find((x) => x.id === state.reviewId);
+    if (!e) { e = state.entries[Math.floor(Math.random() * state.entries.length)]; state.reviewId = e.id; state.reviewShown = false; }
+    const r = e.result || {};
+    el.innerHTML = `<div class="review"><span class="label">복습 · 이 말을 중국어로?</span>
+      <div class="q">${esc(r.intentKo || e.input)}</div>
+      ${state.reviewShown ? `${rubySentence(r.final || {}, true)}<div class="row">${speakBtn(r.final?.hanzi)}<button class="btn" id="review-next">다음 문장</button></div>`
+        : `<div class="row"><button class="btn" id="review-show">정답 보기</button><button class="btn" id="review-next">다른 문장</button></div>`}
+    </div>`;
+  }
+
+  function renderHistory() {
+    const q = state.query.trim().toLowerCase();
+    const list = state.entries.filter((e) => (state.filter === "all" || e.mode === state.filter) &&
+      (!q || [e.input, e.result?.final?.hanzi, e.result?.intentKo, e.result?.final?.pinyin].some((s) => String(s || "").toLowerCase().includes(q))));
+    const el = $("entries");
+    if (!state.entries.length) { el.innerHTML = `<div class="empty">아직 저장한 문장이 없어요.<br>작문 탭에서 코칭을 받고 <b>기록에 추가</b>를 누르면 여기에 쌓입니다.</div>`; return; }
+    if (!list.length) { el.innerHTML = `<div class="empty">조건에 맞는 문장이 없어요.</div>`; return; }
+    el.innerHTML = list.map((e) => {
+      const d = new Date(e.createdAt), m = MODE_TEXT[e.mode] || MODE_TEXT.spoken, open = state.openId === e.id;
+      return `<div class="entry"><button class="head" data-open="${esc(e.id)}" aria-expanded="${open}">
+        <span class="meta"><span>${d.getMonth() + 1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}</span><span>${m.ko}</span>${typeof e.result?.score === "number" ? `<span>${Math.round(e.result.score)}점</span>` : ""}</span>
+        <span class="zh" lang="zh">${esc(e.result?.final?.hanzi)}</span>
+        <span class="ko">${esc(e.result?.intentKo || e.input)}</span></button>
+        ${open ? `<div class="body">${resultHTML(e, { showInput: true })}
+          <div class="row">${state.confirmDel === e.id
+            ? `<span class="status">이 문장을 기록에서 지울까요?</span><button class="btn danger" data-del="${esc(e.id)}">삭제</button><button class="btn" data-cancel-del>취소</button>`
+            : `<button class="btn" data-ask-del="${esc(e.id)}">기록에서 삭제</button>`}</div></div>` : ""}
+      </div>`;
+    }).join("");
+  }
+
+  function renderMode() {
+    for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String(b.dataset.mode === state.mode));
+    $("mode-hint").textContent = MODE_TEXT[state.mode].hint;
+  }
+  function renderStorageNote() {
+    $("storage-note").textContent = "학습 기록과 설정은 지금 쓰는 이 브라우저에만 저장돼요. 다른 사람에게는 보이지 않고, 다른 기기와 연동되지 않으며, 브라우저의 사이트 데이터를 지우면 함께 사라져요.";
+  }
+  function fillSettings() {
+    const p = state.profile;
+    $("s-role").value = p.role || ""; $("s-grade").value = p.grade || ""; $("s-grade-wrap").hidden = p.role !== "학생"; $("s-gender").value = p.gender || ""; $("s-context").value = p.context || "";
+    $("s-level").value = p.level || ""; $("s-mode").value = p.mode || "spoken"; $("s-goal").value = p.goal || 5;
+    $("s-rate").value = String(p.rate || 0.9);
+  }
+  function render() { renderMode(); renderStats(); renderResult(); renderReview(); renderHistory(); }
+
+  // ---------- events ----------
+  document.querySelector(".tabs").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-view]"); if (!b) return;
+    for (const t of document.querySelectorAll("[data-view]")) t.setAttribute("aria-selected", String(t === b));
+    for (const v of ["write", "history", "settings"]) $("view-" + v).hidden = v !== b.dataset.view;
+  });
+  for (const b of document.querySelectorAll("[data-mode]")) b.addEventListener("click", () => { state.mode = b.dataset.mode; renderMode(); });
+  for (const b of document.querySelectorAll("[data-filter]")) b.addEventListener("click", () => {
+    state.filter = b.dataset.filter;
+    for (const x of document.querySelectorAll("[data-filter]")) x.setAttribute("aria-pressed", String(x === b));
+    renderHistory();
+  });
+  $("s-role").addEventListener("change", (e) => { $("s-grade-wrap").hidden = e.target.value !== "학생"; });
+  $("search").addEventListener("input", (e) => { state.query = e.target.value; renderHistory(); });
+  $("ask").addEventListener("click", ask);
+  $("stop").addEventListener("click", () => ctl?.abort());
+  $("input").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) ask(); });
+  function updateCount() {
+    const n = [...$("input").value.trim()].length, c = $("count");
+    c.textContent = n + " / " + MAX_INPUT + "자"; c.classList.toggle("err", n > MAX_INPUT);
+  }
+  $("input").addEventListener("input", updateCount);
+
+  document.addEventListener("click", async (ev) => {
+    const t = ev.target.closest("button"); if (!t) return;
+    if (t.dataset.speak !== undefined) return speak(t.dataset.speak);
+    if (t.dataset.copy !== undefined) {
+      try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = "복사됨"; }
+      catch { t.textContent = t.dataset.copy; }
+      return;
+    }
+    if (t.id === "save-entry" && state.current && !state.current.saved) {
+      t.disabled = true;
+      try {
+        await store.addEntry({ createdAt: Date.now(), input: state.current.input, mode: state.current.mode, result: state.current.result });
+        state.current.saved = true; renderResult(); renderStats();
+      } catch (e) {
+        t.disabled = false;
+        setStatus(e?.code === "storage_full" ? "브라우저 저장 공간이 가득 찼거나 저장이 막혀 있어요. 오래된 기록을 지우거나 시크릿 창이 아닌 일반 창에서 열어 주세요." : "저장하지 못했어요. 다시 눌러 주세요.", true);
+      }
+      return;
+    }
+    if (t.dataset.open) { state.openId = state.openId === t.dataset.open ? null : t.dataset.open; state.confirmDel = null; return renderHistory(); }
+    if (t.dataset.askDel) { state.confirmDel = t.dataset.askDel; return renderHistory(); }
+    if (t.dataset.cancelDel !== undefined) { state.confirmDel = null; return renderHistory(); }
+    if (t.dataset.del) { const id = t.dataset.del; state.confirmDel = null; state.openId = null; try { await store.deleteEntry(id); } catch {} return renderHistory(); }
+    if (t.id === "review-show") { state.reviewShown = true; return renderReview(); }
+    if (t.id === "review-next") {
+      const others = state.entries.filter((x) => x.id !== state.reviewId);
+      if (others.length) state.reviewId = others[Math.floor(Math.random() * others.length)].id;
+      state.reviewShown = false; return renderReview();
+    }
+  });
+
+  $("save-settings").addEventListener("click", async () => {
+    const role = $("s-role").value;
+    const p = { role, grade: role === "학생" ? $("s-grade").value : "", gender: $("s-gender").value, context: $("s-context").value.trim(), level: $("s-level").value,
+      mode: $("s-mode").value, goal: Math.max(1, Math.min(30, Number($("s-goal").value) || 5)), rate: Number($("s-rate").value) || 0.9 };
+    try { await store.saveProfile(p); state.mode = p.mode; render(); $("settings-status").textContent = "저장했어요."; }
+    catch { $("settings-status").textContent = "저장하지 못했어요. 다시 눌러 주세요."; }
+  });
+
+  // ---------- boot ----------
+  loadLocal(); fillSettings(); renderStorageNote(); render(); updateCount();
+})();
+</script>
+</body>
+</html>

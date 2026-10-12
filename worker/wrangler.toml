@@ -1,0 +1,23 @@
+name = "cwn-coach-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+# 이 웹앱을 올린 주소만 AI 서버를 부를 수 있다. 쉼표로 여러 개. 끝에 / 없이, 경로 없이 도메인까지만.
+# 예) GitHub 아이디가 seunggi 이면 "https://seunggi.github.io"
+ALLOWED_ORIGINS = "https://seunggih633-netizen.github.io,http://localhost:8000"
+# 기본 모델과, 바쁘거나 무료 한도를 다 썼을 때 대신 쓸 모델 (둘 다 Gemini API 가격표에서 무료 등급 제공 모델)
+GEMINI_MODEL = "gemini-3.8-flash"
+GEMINI_FALLBACK_MODEL = "gemini-3.5-flash-lite"
+
+# 같은 IP에서 60초에 5번까지만 코칭 요청 허용
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
+# GEMINI_API_KEY 는 여기에 적지 않는다. 아래 명령으로 비밀값(secret)으로 등록:
+#   npx wrangler secret put GEMINI_API_KEY

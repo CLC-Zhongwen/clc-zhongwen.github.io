@@ -1,0 +1,2 @@
+# 로컬 테스트(npx wrangler dev)용. 이 파일을 .dev.vars 로 복사하고 키를 넣는다. .dev.vars 는 절대 GitHub에 올리지 않는다.
+GEMINI_API_KEY=여기에_AI_Studio에서_발급한_키
