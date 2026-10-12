@@ -89,7 +89,8 @@ python tests/mock_server.py
 ## 무료로 쓸 수 있는 범위와 한계 (2026-10-12 공식 문서 기준)
 
 **Gemini API 무료 등급** — [가격](https://ai.google.dev/gemini-api/docs/pricing) · [한도](https://ai.google.dev/gemini-api/docs/rate-limits) · [약관](https://ai.google.dev/gemini-api/terms)
-- 이 앱이 쓰는 `gemini-3.8-flash`(기본)와 `gemini-3.5-flash-lite`(보조)는 가격표에 무료 등급이 있다고 나와 있어요. 체험판이나 일회성 크레딧이 아니에요.
+- 이 앱이 쓰는 `gemini-3.5-flash-lite`(기본)와 `gemini-3.1-flash-lite`(보조)는 가격표에 무료 등급이 있다고 나와 있어요. 체험판이나 일회성 크레딧이 아니에요.
+- **실제 확인한 한도(2026-10-12)**: `gemini-3.8-flash`는 무료 등급이 **하루 20회**라서(Gemini 오류 메시지로 확인) 기본 모델에서 뺐어요. `gemini-3.6-flash`는 "수요 과다(503)" 응답이 잦아서 제외했어요. flash-lite 계열의 하루 한도 숫자는 아직 확인하지 못했어요. https://aistudio.google.com/rate-limit 에서 확인하세요.
 - 한도는 **키 하나가 아니라 프로젝트 하나 기준**이라, 모든 사용자가 같은 한도를 나눠 써요.
   - 하루 요청 수(RPD)는 미국 태평양 시간 자정, 즉 한국 시간 오후 4시(여름) 또는 5시(겨울)에 초기화돼요.
   - 정확한 숫자는 AI Studio에서만 볼 수 있고, Google이 공지 없이 바꿀 수 있어요.
@@ -127,6 +128,32 @@ python tests/mock_server.py
   - 이건 다른 웹사이트가 이 Worker를 끌어다 쓰는 걸 막는 장치예요.
   - 직접 만든 프로그램(curl 등)까지 막지는 못해요. 그런 요청은 분당 제한과 Gemini 무료 한도에서 막혀요.
 - **자동 유료 전환 없음**: Gemini 프로젝트에 결제를 연결하지 않는 한 유료 호출이 생길 수 없어요. Worker는 결제 관련 설정을 하지 않아요.
+
+## 점검 기록 (2026-10-12)
+
+**응답 속도**: 같은 문장, HSK 4·6급 각 3회, 공개 Worker 기준 측정이에요.
+- 수정 전(3.8-flash 기본 → flash-lite 보조): 전체 5.7~15.4초. 3.8-flash가 한도 초과나 수요 과다로 실패한 뒤 보조 모델로 넘어가는 시간이 더해졌어요.
+- 수정 후(flash-lite 기본): 전체 5.3~6.5초, 이 중 Gemini 처리가 4.8~6.0초예요. 병목은 Gemini 생성 시간이고, Worker와 네트워크는 0.3~0.5초예요.
+
+**HSK 수준**: 프롬프트에 수준별 방침을 넣어서, 4급은 기초 규칙 중심, 6급은 대안 표현과 뉘앙스 중심으로 vocab·grammar가 달라지게 했어요.
+- 어휘의 HSK 급수 표시는 AI의 추정이라 틀릴 수 있어요. 예를 들어 天气预报를 4급이나 5급으로 표시해요.
+
+**보안**
+- API 키는 Cloudflare Secret에만 있어요. 저장소의 Git 기록 전체, 공개 사이트, Worker 응답 어디에서도 키 문자열이 발견되지 않았어요.
+- 다른 사이트나 출처 없이 온 요청은 403, 4000바이트를 넘는 요청은 400, 301자 이상 입력은 400으로 거부해요.
+- IP당 1분 5회, 전체 1분 30회로 제한해요. 둘 다 대략적인 제한이에요.
+- Worker 로그에는 Gemini 오류 코드와 메시지만 남아요. 입력 문장과 키는 남지 않아요.
+- 화면에 넣는 AI 응답과 저장된 기록은 모두 HTML 이스케이프해요. 보안 정책(CSP)으로 외부 스크립트와 외부 전송 주소를 제한해요.
+- `Origin` 검사는 브라우저에만 효과가 있어요. curl 같은 직접 호출은 Origin을 꾸며서 보낼 수 있어서, 이런 호출은 요청 제한과 Gemini 무료 한도(결제 미연결)로만 막혀요.
+
+**주소 변경**
+- 공개 주소를 `https://clc-zhongwen.github.io/`(GitHub 조직 `CLC-Zhongwen`)로 옮겼어요.
+- 이전 주소 `seunggih633-netizen.github.io/chinese-writing-note/`는 404가 나요. GitHub Pages는 저장소를 옮겨도 이전 주소를 자동으로 연결해 주지 않아요.
+- Worker는 새 주소만 허용해요.
+
+**측정 도구**: `tests/live_bench.py`로 다시 측정할 수 있어요.
+- 모델을 바꿔 가며 비교하려면 Worker에 `DEBUG_TOKEN` 비밀값을 임시로 넣어야 해요(현재는 지워져 있어서 기능이 꺼져 있어요).
+- 실제 Gemini 한도를 쓰니 꼭 필요할 때만 실행하세요.
 
 ## 사용자가 늘어나면
 
